@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -23,14 +24,18 @@ jobs:
         run: npm install
       - name: Build package
         run: |
-            npm run-script build
-      - name: Release 
-        uses: softprops/action-gh-release@v1
-        if: contains(github.event.head_commit.message, '[BUILD]')
-        with:
-          files: dist/*
-          tag_name: ${{ github.run_id }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          npm run-script build
+      - name: Prepare Tag
+        run: |
+          rm -rf !(dist)
+          shopt -s dotglob
+          mv dist/* .
+          rm -rf dist
+      - name: Create Git Tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git commit -m "Updated tag contents"
+          git tag -fa ${{ github.run_id }} -m "Generated tag from GitHub Actions"
+          git push origin --tags
