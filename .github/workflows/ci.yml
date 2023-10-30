@@ -27,8 +27,9 @@ jobs:
       - name: Create Tag
         if: contains(github.event.head_commit.message, '[BUILD]')
         run: |
-          shopt -s dotglob
+          shopt -s extglob
           rm -rf !(dist)
+          shopt -s dotglob
           mv dist/* .
           rm -rf dist
           git config --local user.email "action@github.com"
