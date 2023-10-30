@@ -1,3 +1,6 @@
+### Version 2.4.0
+ - Make `Scanner Paused UI` optional
+
 ### Version 2.3.8
  -   `Scanner Paused` color tone changes.
  -   Misc code refactor.
