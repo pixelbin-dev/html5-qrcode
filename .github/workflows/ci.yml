@@ -24,14 +24,13 @@ jobs:
       - name: Build package
         run: |
           npm run-script build
-      - name: Prepare Tag
+      - name: Create Tag
+        if: contains(github.event.head_commit.message, '[BUILD]')
         run: |
           shopt -s dotglob
           rm -rf !(dist)
           mv dist/* .
           rm -rf dist
-      - name: Create Git Tag
-        run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add -A
