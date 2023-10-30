@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+        matrix:
+          node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Build package
+        run: |
+          npm run-script build
+      - name: Create Tag
+        if: |
+          contains(github.event.head_commit.message, '[BUILD]') || contains(github.event.head_commit.message, '[RELEASE:')
+        run: |
+          if [[ "${{ github.event.head_commit.message }}" == *"[BUILD]"* ]]; then
+            TAG_NAME=${{ github.run_id }}
+          elif [[ "${{ github.event.head_commit.message }}" == *"[RELEASE:"* ]]; then
+            VERSION=$(echo ${{ github.event.head_commit.message }} | grep -oP '(?<=\[RELEASE:)[^][]*(?=])')
+            if [ -z "$VERSION" ]; then
+              echo "No version found in the commit message"
+              exit 1
+            fi
+            TAG_NAME="${VERSION}"
+          fi
+          shopt -s extglob
+          rm -rf !(dist)
+          shopt -s dotglob
+          mv dist/* .
+          rm -rf dist
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git commit -m "Updated tag contents"
+          git tag -fa $TAG_NAME -m "Generated tag from GitHub Actions"
+          git push origin --tags
