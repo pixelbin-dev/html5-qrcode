@@ -26,8 +26,8 @@ jobs:
           npm run-script build
       - name: Prepare Tag
         run: |
-          rm -rf !(dist)
           shopt -s dotglob
+          rm -rf !(dist)
           mv dist/* .
           rm -rf dist
       - name: Create Git Tag
