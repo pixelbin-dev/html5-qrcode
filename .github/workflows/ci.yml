@@ -29,8 +29,8 @@ jobs:
         if: contains(github.event.head_commit.message, '[BUILD]')
         with:
           files: dist/*
-          tag_name: ${{ github.ref }}
+          tag_name: ${{ github.workflow_sha }}
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
