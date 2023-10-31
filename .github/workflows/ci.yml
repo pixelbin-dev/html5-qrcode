@@ -3,7 +3,8 @@ name: CI
 on:
   push:
   pull_request:
-    branches: [ "main" ]
+    branches: 
+      - "main"
 
 jobs:
   build:
@@ -28,16 +29,19 @@ jobs:
         if: |
           contains(github.event.head_commit.message, '[BUILD]') || contains(github.event.head_commit.message, '[RELEASE:')
         run: |
-          if [[ "${{ github.event.head_commit.message }}" == *"[BUILD]"* ]]; then
-            TAG_NAME=${{ github.run_id }}
-          elif [[ "${{ github.event.head_commit.message }}" == *"[RELEASE:"* ]]; then
-            VERSION=$(echo ${{ github.event.head_commit.message }} | grep -oP '(?<=\[RELEASE:)[^][]*(?=])')
-            if [ -z "$VERSION" ]; then
-              echo "No version found in the commit message"
-              exit 1
+          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+          while IFS= read -r line; do
+            if [[ "$line" == *"[BUILD]"* ]]; then
+              TAG_NAME=${{ github.run_id }}
+            elif [[ "$line" == *"[RELEASE:"* ]]; then
+              VERSION=$(echo "$line" | grep -oP '(?<=\[RELEASE:)[^][]*(?=])')
+              if [ -z "$VERSION" ]; then
+                echo "No version found in the commit message"
+                exit 1
+              fi
+              TAG_NAME="${VERSION}"
             fi
-            TAG_NAME="${VERSION}"
-          fi
+          done <<< "$COMMIT_MESSAGE"
           shopt -s extglob
           rm -rf !(dist)
           shopt -s dotglob
@@ -47,5 +51,5 @@ jobs:
           git config --local user.name "GitHub Action"
           git add -A
           git commit -m "Updated tag contents"
-          git tag -fa $TAG_NAME -m "Generated tag from GitHub Actions"
+          git tag -fa "$TAG_NAME" -m "Generated tag from GitHub Actions"
           git push origin --tags
